@@ -1,76 +1,73 @@
 import streamlit as st
 from textblob import TextBlob
-import re
 
-st.set_page_config(
-    page_title="🧠 Analizador de Mensajes",
-    page_icon="💬",
-    layout="wide"
-)
+st.set_page_config(page_title="🎬 Crítico de Cine", page_icon="🍿")
 
-st.title("💬 Analizador de Mensajes — ¿Qué dice tu texto de ti?")
+st.title("🍿 Crítico de Cine — ¿Qué tan buena fue la película?")
 st.markdown("""
-Escribe cómo te sientes o cualquier texto, y descubre si transmite un tono **positivo, negativo o neutral**,  
-además de qué tan **emocional o racional** es tu mensaje.
+Escribe tu opinión sobre una película y este analizador detectará si tu comentario es **positivo, negativo o neutral**,  
+además de mostrarte qué tipo de crítica estás haciendo.
 """)
 
-# Entrada de texto
-st.subheader("✍️ Escribe algo para analizar")
-texto = st.text_area("Por ejemplo: 'Hoy fue un gran día, me siento increíblemente motivado.'", height=200)
+# Entrada del usuario
+opinion = st.text_area("🎥 Escribe tu opinión sobre una película:", height=200, placeholder="Ejemplo: 'La historia de Dune es impresionante, me encantó.'")
 
-# Botón para analizar
-if st.button("Analizar texto"):
-    if texto.strip():
+if st.button("Analizar opinión"):
+    if opinion.strip():
         try:
-            # Traducción automática al inglés para mejor análisis
-            blob_es = TextBlob(texto)
-            texto_en = str(blob_es.translate(to='en'))
+            # Traducir al inglés (TextBlob funciona mejor así)
+            blob_es = TextBlob(opinion)
+            opinion_en = str(blob_es.translate(to='en'))
         except Exception:
-            texto_en = texto  # Si falla la traducción, usa el texto original
+            opinion_en = opinion  # Si no puede traducir, usa el texto original
 
-        blob = TextBlob(texto_en)
-        sentimiento = blob.sentiment.polarity
+        blob = TextBlob(opinion_en)
+        polaridad = blob.sentiment.polarity
         subjetividad = blob.sentiment.subjectivity
 
-        palabras = re.findall(r'\b\w+\b', texto.lower())
-        palabras_unicas = set(palabras)
-        total_palabras = len(palabras)
-        total_unicas = len(palabras_unicas)
+        # Determinar sentimiento
+        if polaridad > 0.1:
+            resultado = "🎉 Opinión positiva — ¡Te gustó la película!"
+            color = "success"
+        elif polaridad < -0.1:
+            resultado = "💀 Opinión negativa — Parece que no te gustó mucho."
+            color = "error"
+        else:
+            resultado = "😐 Opinión neutral — No expresas emociones fuertes."
+            color = "info"
 
-        st.subheader("📊 Resultados del análisis")
+        # Mostrar resultados
+        st.markdown("---")
+        st.markdown("## 🎭 Resultado del análisis")
+        getattr(st, color)(resultado)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("### 🎭 Sentimiento")
-            sentimiento_norm = (sentimiento + 1) / 2
-            st.progress(sentimiento_norm)
+        st.markdown("### 📊 Detalles del análisis:")
+        st.write(f"- **Polaridad:** {polaridad:.2f} (entre -1 = muy negativa y +1 = muy positiva)")
+        st.write(f"- **Subjetividad:** {subjetividad:.2f} (entre 0 = objetiva y 1 = emocional)")
 
-            if sentimiento > 0.1:
-                st.success(f"Mensaje Positivo ({sentimiento:.2f}) 😊")
-            elif sentimiento < -0.1:
-                st.error(f"Mensaje Negativo ({sentimiento:.2f}) 😟")
-            else:
-                st.info(f"Mensaje Neutral ({sentimiento:.2f}) 😐")
+        # Tipo de comentario
+        if subjetividad > 0.6:
+            tipo = "emocional (hablas desde tus sentimientos)"
+        elif subjetividad < 0.3:
+            tipo = "objetiva (analizas hechos concretos)"
+        else:
+            tipo = "mixta (mezcla de emociones y razonamiento)"
 
-        with col2:
-            st.markdown("### 💭 Subjetividad")
-            st.progress(subjetividad)
-            if subjetividad > 0.5:
-                st.warning(f"Alta subjetividad ({subjetividad:.2f}) — muy emocional")
-            else:
-                st.info(f"Baja subjetividad ({subjetividad:.2f}) — más racional")
+        st.info(f"Tu crítica parece **{tipo}**.")
 
-        st.subheader("🧩 Métricas del texto")
-        st.write(f"- Total de palabras: **{total_palabras}**")
-        st.write(f"- Palabras únicas: **{total_unicas}**")
-        st.write(f"- Porcentaje de palabras únicas: **{(total_unicas / total_palabras * 100):.1f}%**")
-
-        palabras_largas = [p for p in palabras if len(p) > 6]
-        if palabras_largas:
-            st.write("🔍 Palabras destacadas:", ", ".join(sorted(set(palabras_largas))[:10]))
+        # Frase final interpretando el resultado
+        if polaridad > 0.1:
+            st.success("Veredicto final: ¡Recomiendas esta película! 🍿")
+        elif polaridad < -0.1:
+            st.error("Veredicto final: No la recomendarías. 👎")
+        else:
+            st.warning("Veredicto final: No tienes una opinión clara al respecto. 🤔")
 
     else:
-        st.warning("Por favor, escribe algo para analizar.")
+        st.warning("Por favor, escribe una opinión para analizar.")
 
 st.markdown("---")
-st.caption("Desarrollado con ❤️ usando Streamlit y TextBlob — ahora entiende tus emociones en español.")
+st.caption("Desarrollado con ❤️ por tu asistente de cine — analiza tus reseñas como un crítico profesional.")
+
+
+
